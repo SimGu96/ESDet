@@ -1,6 +1,6 @@
 import tensorflow as tf
 from src.dataGenerator import generator_from_data_path
-from Networks.ESDet import ESDet
+from model.ESDet import ESDet
 from src.create_config import load_dict
 from tensorflow.keras import backend as K
 import numpy as np
@@ -92,7 +92,7 @@ ESDet.model.compile(
     metrics=[box_loss_fn, class_loss_fn, conf_loss_fn]
 )
 
-ESDet.model.load_weights("checkpoints/model.03-1.58.hdf5")
+ESDet.model.load_weights("checkpoints/model.07-1.27.hdf5")
 
 
 

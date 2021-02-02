@@ -38,8 +38,7 @@ class ESDet():
 
         head = Conv2D(
                 name='OD_head', filters=output_shape, kernel_size=(3, 3), 
-                strides=(1, 1), activation=None, padding="SAME", use_bias=True, kernel_initializer=TruncatedNormal(stddev=0.001),
-            kernel_regularizer=l2(self.config.WEIGHT_DECAY))(x)
+                strides=(1, 1), activation=None, padding="SAME")(x)
 
 
         head = tf.keras.layers.Reshape((self.config.ANCHORS, -1))(head)

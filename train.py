@@ -1,6 +1,6 @@
 import tensorflow as tf
 from src.dataGenerator import generator_from_data_path
-from Networks.ESDet import ESDet
+from model.ESDet import ESDet
 from src.create_config import load_dict
 from tensorflow.keras import backend as K
 from src.losses import *
@@ -10,7 +10,7 @@ img_file = "img_train.txt"
 gt_file = "gt_train.txt"
 img_file_val = "img_val.txt"
 gt_file_val = "gt_val.txt"
-EPOCHS = 5
+EPOCHS = 15
 STEPS = None
 REDUCELRONPLATEAU = True
 OPTIMIZER = "adam"
@@ -35,7 +35,7 @@ gts.close()
 config_file= "squeeze.config"
 cfg = load_dict(config_file)
 cfg.EPOCHS = EPOCHS
-#cfg.BATCH_SIZE = 2
+cfg.BATCH_SIZE = 6
 
 
 
@@ -63,9 +63,9 @@ ESDet.model.summary()
 
 
 lr_schedule = tf.keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=5.0e-3,
+    initial_learning_rate=1.0e-2,
     decay_steps=1000,
-    decay_rate=0.8)
+    decay_rate=0.9)
 """
 learning_rates = [2.3e-04, 1.8e-04, 1.4e-04, 1.2e-04, 1.0e-04, 2.5e-05]
 learning_rate_boundaries = [125, 250, 500, 700, 3000]
