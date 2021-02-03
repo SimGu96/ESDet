@@ -9,6 +9,7 @@ import cv2
 import matplotlib.pyplot as plt
 from src.losses import *
 import src.utils_squeezeDet as utils
+import itertools 
 
 
 
@@ -109,23 +110,39 @@ def bbox_transform_single_box(bbox):
 
     return out_box
 
+def draw_gt(y_true, font, img):
+    box_input = y_true[:, :, 1:5]
+    labels = y_true[:, :, 9:]
+    non_zero_boxes = box_input[0][box_input[0] > 0].reshape((-1,4))
+
+    non_zero_labels = []
+    #get the predicted labels
+    for k, coords in enumerate(box_input[0,:]):
+        if np.sum(coords) > 0:
+
+            for j, l in enumerate(labels[0, k]):
+                if l == 1:
+                    non_zero_labels.append(j)
+
+    #iterate gt boxes
+    for j, gt_box in enumerate(non_zero_boxes):
+
+        #transform into xmin, ymin, xmax, ymax
+        gt_box = bbox_transform_single_box(gt_box)
+
+        #add rectangle and text
+        cv2.rectangle(img, (gt_box[0], gt_box[1]), (gt_box[2], gt_box[3]), (0, 255, 0), 1)
+        cv2.putText(img, cfg.CLASS_NAMES[int(non_zero_labels[j])], (gt_box[0], gt_box[1]), font, 0.5,
+                    (0, 255, 0), 1, cv2.LINE_AA)
+        
+    return img
 
 
-for i in range(20):
-    
-    imgs, y_true = next(validation_generator)
-    y_pred = ESDet.model.predict(imgs)
-
-    img = cv2.imread(img_names_val[i])
-    img = cv2.resize( img, (cfg.IMAGE_WIDTH, cfg.IMAGE_HEIGHT))
-
+def draw_pred(y_pred, font, img):
     #get predicted boxes
     all_filtered_boxes, all_filtered_classes, all_filtered_scores = filter_batch(y_pred, cfg)
 
-    print( np.array(all_filtered_boxes).shape)
-
-    non_zero_labels = []
-    font = cv2.FONT_HERSHEY_SIMPLEX
+    #print( np.array(all_filtered_boxes).shape)
 
     #iterate predicted boxes
     for j, det_box in enumerate(all_filtered_boxes[0]):
@@ -137,6 +154,19 @@ for i in range(20):
         cv2.rectangle(img, (det_box[0], det_box[1]), (det_box[2], det_box[3]), (0,0,255), 1)
         cv2.putText(img, cfg.CLASS_NAMES[all_filtered_classes[0][j]] + " " + str(all_filtered_scores[0][j]) , (det_box[0], det_box[1]), font, 0.5, (0,0,255), 1, cv2.LINE_AA)
 
+    return img
+
+for i in range(20, 40):
+    
+    imgs, y_true = next(itertools.islice(validation_generator, i, None))
+    y_pred = ESDet.model.predict(imgs)
+
+    img = cv2.imread(img_names_val[i])
+    img = cv2.resize( img, (cfg.IMAGE_WIDTH, cfg.IMAGE_HEIGHT))
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    img = draw_gt(y_true, font, img)
+    img = draw_pred(y_pred, font, img)
 
     cv2.imshow("text", img)
     cv2.waitKey(0)  
