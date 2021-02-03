@@ -65,6 +65,38 @@ class ESDetClassLoss(tf.losses.Loss):
         return class_loss
 
 
+class ESDetClassLossOrig(tf.losses.Loss):
+    """Implements classification loss"""
+
+    def __init__(self, config):
+        super(ESDetClassLoss, self).__init__(
+            reduction="none", name="class_loss_orig"
+        )
+        self._conf = config
+
+    def call(self, y_true, y_pred):
+        #slice y_true
+        input_mask = y_true[:, :, 0]
+        #input_mask = K.expand_dims(input_mask, axis=-1)
+        labels = y_true[:, :, 9:]
+
+        #number of objects. Used to normalize bbox and classification loss
+        num_objects = K.sum(input_mask)
+
+        #before computing the losses we need to slice the network outputs
+        pred_class_probs, _, _ = utils.slice_predictions(y_pred, self._conf)
+
+        #compute class loss,add a small value into log to prevent blowing up
+        class_loss_orig = K.sum(labels * (-K.log(pred_class_probs + self._conf.EPSILON))
+                    + (1 - labels) * (-K.log(1 - pred_class_probs + self._conf.EPSILON))
+        * input_mask * self._conf.LOSS_COEF_CLASS) / num_objects
+
+        #tf.print(class_loss, class_loss_orig, num_objects, output_stream='file://loggtest.txt')
+
+        return class_loss
+
+
+
 class ESDetConfLoss(tf.losses.Loss):
     """Implements confidence loss"""
 
